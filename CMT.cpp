@@ -80,6 +80,9 @@ CMT::CMT()
     detectorType = "Feature2D.BRISK";
     descriptorType = "Feature2D.BRISK";
     matcherType = "BruteForce-Hamming";
+    thrOutlier = 20;
+    thrConf = 0.75;
+    thrRatio = 0.8;
 }
 
 void CMT::initialise(cv::Mat im_gray0, cv::Point2f topleft, cv::Point2f bottomright)
@@ -89,7 +92,11 @@ void CMT::initialise(cv::Mat im_gray0, cv::Point2f topleft, cv::Point2f bottomri
     //Initialise detector, descriptor, matcher
     detector = cv::Algorithm::create<cv::FeatureDetector>(detectorType.c_str());
     descriptorExtractor = cv::Algorithm::create<cv::DescriptorExtractor>(descriptorType.c_str());
-    descriptorMatcher = cv::Algorithm::create<cv::DescriptorMatcher>(matcherType.c_str());
+    descriptorMatcher = cv::DescriptorMatcher::create(matcherType.c_str());
+    std::vector<std::string> list;
+    cv::Algorithm::getList(list);
+    for(int i = 0; i < list.size(); i++)
+        qDebug() << list[i].c_str();
     if(descriptorMatcher == NULL)
         qDebug() << "test" << matcherType.c_str();
 
@@ -243,7 +250,7 @@ double findMinSymetric(const std::vector<std::vector<double> >& dist, const std:
         if(!used[x])
         {
             for(int y = x+1; y < limit; y++)
-                if(!used[y] && dist[x][y] < min)
+                if(!used[y] && dist[x][y] <= min)
                 {
                     min = dist[x][y];
                     i = x;
@@ -415,17 +422,21 @@ void CMT::estimate(const std::vector<std::pair<cv::KeyPoint, int> >& keypointsIN
                 //This distance might be 0 for some combinations,
                 //as it can happen that there is more than one keypoint at a single location
                 double dist = sqrt(p.dot(p));
-                double origDist = squareForm[class_ind2[i]][class_ind1[i]];
+                double origDist = squareForm[class_ind1[i]][class_ind2[i]];
                 scaleChange.push_back(dist/origDist);
                 //Compute angle
                 double angle = atan2(p.y, p.x);
-                double origAngle = angles[class_ind2[i]][class_ind1[i]];
+                double origAngle = angles[class_ind1[i]][class_ind2[i]];
                 double angleDiff = angle - origAngle;
                 //Fix long way angles
                 if(angleDiff > M_PI)
                     angleDiff -= sign(angleDiff) * 2 * M_PI;
                 angleDiffs.push_back(angleDiff);
             }
+            for(int i = 0; i < scaleChange.size(); i++)
+                qDebug() << scaleChange[i];
+            for(int i = 0; i < angleDiffs.size(); i++)
+                qDebug() << angleDiffs[i];
             scaleEstimate = median(scaleChange);
             if(!estimateScale)
                 scaleEstimate = 1;
@@ -436,12 +447,18 @@ void CMT::estimate(const std::vector<std::pair<cv::KeyPoint, int> >& keypointsIN
             votes = std::vector<cv::Point2f>();
             for(int i = 0; i < keypoints.size(); i++)
                 votes.push_back(keypoints[i].first.pt - scaleEstimate * rotate(springs[keypoints[i].second-1], medRot));
+            for(int i = 0; i < votes.size(); i++)
+                qDebug() << votes[i].x << votes[i].y;
             qDebug() << "linkage";
             //Compute linkage between pairwise distances
             std::vector<Cluster> linkageData = linkage(votes);
+            for(int i = 0; i < linkageData.size(); i++)
+                qDebug() << linkageData[i].first << linkageData[i].second << linkageData[i].dist << linkageData[i].num;
             qDebug() << "fcluster";
             //Perform hierarchical distance-based clustering
             std::vector<int> T = fcluster(linkageData, thrOutlier);
+            for(int i = 0; i < T.size(); i++)
+                qDebug() << T[i];
             qDebug() << "bincount";
             //Count votes for each cluster
             std::vector<int> cnt = binCount(T);
@@ -495,15 +512,28 @@ std::vector<bool> in1d(const std::vector<int>& a, const std::vector<int>& b)
 void CMT::processFrame(cv::Mat im_gray)
 {
     qDebug() << "processFrame";
-    std::vector<std::pair<cv::KeyPoint, int> > trackedKeypoints;
+    for(int i = 0; i < activeKeypoints.size(); i++)
+    {
+        qDebug() << activeKeypoints[i].first.pt.x << activeKeypoints[i].first.pt.y << activeKeypoints[i].second;
+    }
+    trackedKeypoints = std::vector<std::pair<cv::KeyPoint, int> >();
     std::vector<unsigned char> status;
     track(im_prev, im_gray, activeKeypoints, trackedKeypoints, status);
+    qDebug() << "processFrame";
+    for(int i = 0; i < trackedKeypoints.size(); i++)
+    {
+        qDebug() << trackedKeypoints[i].first.pt.x << trackedKeypoints[i].first.pt.y << trackedKeypoints[i].second << status[i];
+    }
     cv::Point2f center;
     double scaleEstimate;
     double rotationEstimate;
     std::vector<std::pair<cv::KeyPoint, int> > trackedKeypoints2;
     estimate(trackedKeypoints, center, scaleEstimate, rotationEstimate, trackedKeypoints2);
     trackedKeypoints = trackedKeypoints2;
+    for(int i = 0; i < trackedKeypoints.size(); i++)
+    {
+        qDebug() << trackedKeypoints[i].first.pt.x << trackedKeypoints[i].first.pt.y << trackedKeypoints[i].second;
+    }
 
     qDebug() << "detect keypoints, compute descriptors";
 

@@ -50,6 +50,7 @@ public:
 
     cv::Mat im_prev;
     std::vector<std::pair<cv::KeyPoint,int> > activeKeypoints;
+    std::vector<std::pair<cv::KeyPoint,int> > trackedKeypoints;
 
     int nbInitialKeypoints;
 
