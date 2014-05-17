@@ -87,6 +87,7 @@ CMT::CMT()
     thrOutlier = 20;
     thrConf = 0.75;
     thrRatio = 0.8;
+    descriptorLength = 512;
     estimateScale = true;
     estimateRotation = true;
 }
@@ -234,8 +235,15 @@ T sign(T t)
 template<typename T>
 T median(std::vector<T> list)
 {
+    T val;
     std::nth_element(&list[0], &list[0]+list.size()/2, &list[0]+list.size());
-    return list[list.size()/2];
+    val = list[list.size()/2];
+    if(list.size()%2==0)
+    {
+        std::nth_element(&list[0], &list[0]+list.size()/2-1, &list[0]+list.size());
+        val = (val+list[list.size()/2-1])/2;
+    }
+    return val;
 }
 
 class Cluster
@@ -378,7 +386,7 @@ std::vector<int> fcluster(const std::vector<Cluster>& clusters, double threshold
 void CMT::estimate(const std::vector<std::pair<cv::KeyPoint, int> >& keypointsIN, cv::Point2f& center, double& scaleEstimate, double& medRot, std::vector<std::pair<cv::KeyPoint, int> >& keypoints)
 {
     qDebug() << "estimate";
-    center = cv::Point2d(NAN,NAN);
+    center = cv::Point2f(NAN,NAN);
     scaleEstimate = NAN;
     medRot = NAN;
 
@@ -449,6 +457,8 @@ void CMT::estimate(const std::vector<std::pair<cv::KeyPoint, int> >& keypointsIN
             medRot = median(angleDiffs);
             if(!estimateRotation)
                 medRot = 0;
+            qDebug() << "scale rotate";
+            qDebug() << scaleEstimate << medRot;
             qDebug() << "votes";
             votes = std::vector<cv::Point2f>();
             for(int i = 0; i < keypoints.size(); i++)
@@ -493,6 +503,8 @@ void CMT::estimate(const std::vector<std::pair<cv::KeyPoint, int> >& keypointsIN
             for(int i = 0; i < newVotes.size(); i++)
                 center += newVotes[i];
             center *= (1.0/newVotes.size());
+
+            qDebug() << "center" << center.x << center.y;
         }
     }
 }
@@ -557,16 +569,15 @@ void CMT::processFrame(cv::Mat im_gray)
     //For each keypoint and its descriptor
     for(int i = 0; i < keypoints.size(); i++)
     {
-        qDebug() << "match" << "keypoints" << keypoints.size() << "features" << features.cols << features.rows;
-        if(descriptorMatcher == NULL)
-            qDebug() << "test";
+        //qDebug() << "match" << "keypoints" << keypoints.size() << "features" << features.cols << features.rows;
         cv::KeyPoint keypoint = keypoints[i];
+
+        //qDebug() << keypoint.pt.x << keypoint.pt.y;
         //First: Match over whole image
         //Compute distances to all descriptors
         std::vector<cv::DMatch> matches;
         descriptorMatcher->match(featuresDatabase,features.row(i), matches);
 
-        qDebug() << "combine";
         //Convert distances to confidences, do not weight
         std::vector<float> combined;
         for(int i = 0; i < matches.size(); i++)
@@ -592,15 +603,17 @@ void CMT::processFrame(cv::Mat im_gray)
 
         //If distance ratio is ok and absolute distance is ok and keypoint class is not background
         if(ratio < thrRatio && combined[bestInd] > thrConf && keypoint_class != 0)
+        {
+            qDebug() << "new_kpt" << keypoint.pt.x << keypoint.pt.y << keypoint_class;
             activeKeypoints.push_back(std::make_pair(keypoint, keypoint_class));
-
+        }
         //In a second step, try to match difficult keypoints
         //If structural constraints are applicable
         if(!(isnan(center.x) | isnan(center.y)))
         {
             //Compute distances to initial descriptors
             std::vector<cv::DMatch> matches;
-            descriptorMatcher->match(features.row(i), selectedFeatures, matches);
+            descriptorMatcher->match(selectedFeatures, features.row(i), matches);
 
             //Convert distances to confidences
             std::vector<float> confidences;
@@ -623,6 +636,13 @@ void CMT::processFrame(cv::Mat im_gray)
             for(int i = 0; i < confidences.size(); i++)
                 combined.push_back((displacements[i] < thrOutlier)*confidences[i]);
 
+            if(i == 0)
+            {
+                qDebug() << "combined";
+                for(int j = 0; j < combined.size(); j++)
+                    qDebug() << combined[j];
+            }
+
             std::vector<int>& classes = selectedClasses;
 
             //Sort in descending order
@@ -644,9 +664,13 @@ void CMT::processFrame(cv::Mat im_gray)
             //If distance ratio is ok and absolute distance is ok and keypoint class is not background
             if(ratio < thrRatio && combined[bestInd] > thrConf && keypoint_class != 0)
             {
+                qDebug() << "new_kpt2" << keypoint.pt.x << keypoint.pt.y << keypoint_class;
                 for(int i = activeKeypoints.size()-1; i >= 0; i--)
                     if(activeKeypoints[i].second == keypoint_class)
+                    {
+                        qDebug() << "erase" << activeKeypoints[i].first.pt.x << activeKeypoints[i].first.pt.y << activeKeypoints[i].second;
                         activeKeypoints.erase(activeKeypoints.begin()+i);
+                    }
                 activeKeypoints.push_back(std::make_pair(keypoint, keypoint_class));
             }
         }
@@ -700,8 +724,15 @@ void CMT::processFrame(cv::Mat im_gray)
 
         boundingbox = cv::Rect_<float>(minx, miny, maxx-minx, maxy-miny);
     }
+    qDebug() << "end";
+    qDebug() << "tracked";
     for(int i = 0; i < trackedKeypoints.size(); i++)
     {
         qDebug() << trackedKeypoints[i].first.pt.x << trackedKeypoints[i].first.pt.y << trackedKeypoints[i].second;
+    }
+    qDebug() << "active";
+    for(int i = 0; i < activeKeypoints.size(); i++)
+    {
+        qDebug() << activeKeypoints[i].first.pt.x << activeKeypoints[i].first.pt.y << activeKeypoints[i].second;
     }
 }
