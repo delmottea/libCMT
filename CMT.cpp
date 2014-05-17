@@ -46,7 +46,7 @@ void track(cv::Mat im_prev, cv::Mat im_gray, const std::vector<std::pair<cv::Key
         for(int i = 0; i < pts.size(); i++)
         {
             cv::Point2d v = pts_back[i]-pts[i];
-            fb_err.push_back(v.dot(v));
+            fb_err.push_back(sqrt(v.dot(v)));
         }
 
         //Set status depending on fb_err and lk error
@@ -529,6 +529,7 @@ std::vector<bool> in1d(const std::vector<int>& a, const std::vector<int>& b)
 
 void CMT::processFrame(cv::Mat im_gray)
 {
+    qDebug() << "\n\n\n";
     qDebug() << "processFrame";
     for(int i = 0; i < activeKeypoints.size(); i++)
     {

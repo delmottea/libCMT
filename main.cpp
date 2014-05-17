@@ -55,11 +55,11 @@ int main(int argc, char *argv[])
         //cv::rectangle(img, cv::Rect(cmt.boundingbox.x, cmt.boundingbox.y, cmt.boundingbox.width, cmt.boundingbox.height), cv::Scalar(255,255,255));
 
         imshow("frame", img);
-        /*if(i == 1)
+        if(i == 290)
         {
             cv::waitKey(100000);
             return 0;
-        }*/
+        }
         cv::waitKey(1);
     }
     return 0;//a.exec();
