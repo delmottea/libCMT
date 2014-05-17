@@ -26,6 +26,7 @@ int main(int argc, char *argv[])
 
     qDebug() << CV_MAJOR_VERSION << CV_MINOR_VERSION;
     CMT cmt;
+    cmt.estimateRotation = false;
     for(int i = start; i <= end; i++)
     {
         num2str(numString, numLength+1, i);

@@ -87,6 +87,8 @@ CMT::CMT()
     thrOutlier = 20;
     thrConf = 0.75;
     thrRatio = 0.8;
+    estimateScale = true;
+    estimateRotation = true;
 }
 
 void CMT::initialise(cv::Mat im_gray0, cv::Point2f topleft, cv::Point2f bottomright)
