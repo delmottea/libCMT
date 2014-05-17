@@ -46,11 +46,16 @@ int main(int argc, char *argv[])
         {
             cv::circle(img, cmt.trackedKeypoints[i].first.pt, 3, cv::Scalar(255,255,255));
         }
-        /*cv::line(img, cmt.topLeft, cmt.topRight, cv::Scalar(255,255,255));
-        cv::rectangle(img, cv::Rect(cmt.boundingbox.x, cmt.boundingbox.y, cmt.boundingbox.width, cmt.boundingbox.height), cv::Scalar(255,255,255));
-        */
+        cv::line(img, cmt.topLeft, cmt.topRight, cv::Scalar(255,255,255));
+        cv::line(img, cmt.topRight, cmt.bottomRight, cv::Scalar(255,255,255));
+        cv::line(img, cmt.bottomRight, cmt.bottomLeft, cv::Scalar(255,255,255));
+        cv::line(img, cmt.bottomLeft, cmt.topLeft, cv::Scalar(255,255,255));
+
+        //cv::rectangle(img, cv::Rect(cmt.boundingbox.x, cmt.boundingbox.y, cmt.boundingbox.width, cmt.boundingbox.height), cv::Scalar(255,255,255));
+
         imshow("frame", img);
-        cv::waitKey(100000);
+        //if(i == 1)
+            cv::waitKey(100000);
     }
-    return a.exec();
+    return 0;//a.exec();
 }

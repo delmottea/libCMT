@@ -53,12 +53,16 @@ void track(cv::Mat im_prev, cv::Mat im_gray, const std::vector<std::pair<cv::Key
         for(int i = 0; i < status.size(); i++)
             status[i] = fb_err[i] <= THR_FB & status[i];
 
+        qDebug() << "status";
+        for(int i = 0; i < status.size(); i++)
+            qDebug() << status[i];
+
         keypointsTracked = std::vector<std::pair<cv::KeyPoint, int> >();
         for(int i = 0; i < pts.size(); i++)
         {
             std::pair<cv::KeyPoint, int> p = keypointsIN[i];
             if(status[i])
-                p.first.pt = pts[i];
+                p.first.pt = nextPts[i];
             keypointsTracked.push_back(p);
         }
     }
@@ -693,5 +697,9 @@ void CMT::processFrame(cv::Mat im_gray)
         float maxy = std::max(std::max(topLeft.y,topRight.y),std::max(bottomRight.y, bottomLeft.y));
 
         boundingbox = cv::Rect_<float>(minx, miny, maxx-minx, maxy-miny);
+    }
+    for(int i = 0; i < trackedKeypoints.size(); i++)
+    {
+        qDebug() << trackedKeypoints[i].first.pt.x << trackedKeypoints[i].first.pt.y << trackedKeypoints[i].second;
     }
 }
