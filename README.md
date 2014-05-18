@@ -3,4 +3,4 @@ libCMT
 
 c++ port of the python code from https://github.com/gnebehay/CMT
 
-start of the c++ port, not finished and not tested
+based on paper Consensus-based Matching and Tracking of Keypoints for Object Tracking, Nebehay, Georg and Pflugfelder, Roman, 2014
