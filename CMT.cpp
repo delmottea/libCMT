@@ -21,10 +21,6 @@
 
 #endif
 
-#ifndef M_PI
-    #define M_PI 3.141592653589793238462643383279502884197169399375105820974944592307816406
-#endif
-
 void inout_rect(const std::vector<cv::KeyPoint>& keypoints, cv::Point2f topleft, cv::Point2f bottomright, std::vector<cv::KeyPoint>& in, std::vector<cv::KeyPoint>& out)
 {
     for(int i = 0; i < keypoints.size(); i++)
@@ -103,6 +99,7 @@ CMT::CMT()
     descriptorLength = 512;
     estimateScale = true;
     estimateRotation = true;
+    nbInitialKeypoints = 0;
 }
 
 void CMT::initialise(cv::Mat im_gray0, cv::Point2f topleft, cv::Point2f bottomright)
@@ -428,8 +425,8 @@ void CMT::estimate(const std::vector<std::pair<cv::KeyPoint, int> >& keypointsIN
                 float origAngle = angles[class_ind1[i]][class_ind2[i]];
                 float angleDiff = angle - origAngle;
                 //Fix long way angles
-                if(fabs(angleDiff) > M_PI)
-                    angleDiff -= sign(angleDiff) * 2 * M_PI;
+                if(fabs(angleDiff) > CV_PI)
+                    angleDiff -= sign(angleDiff) * 2 * CV_PI;
                 angleDiffs.push_back(angleDiff);
             }
             scaleEstimate = median(scaleChange);
