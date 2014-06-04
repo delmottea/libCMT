@@ -1,6 +1,31 @@
 #include "CMT.h"
+#include <stdio.h>
+#define _USE_MATH_DEFINES
+#include <cmath>
 
-void inout_rect(const std::vector<cv::KeyPoint>& keypoints, cv::Point2d topleft, cv::Point2d bottomright, std::vector<cv::KeyPoint>& in, std::vector<cv::KeyPoint>& out)
+#if __cplusplus < 201103L //test if c++11
+
+    #include <limits>
+
+    #ifndef NAN
+    //may not be correct on all compilator, DON'T USE the flag FFAST-MATH
+
+        #define NAN std::numeric_limits<float>::quiet_NaN()
+
+        template <T>
+        bool is_nan(T d)
+        {
+          return d != d;
+        }
+    #endif
+
+#endif
+
+#ifndef M_PI
+    #define M_PI 3.141592653589793238462643383279502884197169399375105820974944592307816406
+#endif
+
+void inout_rect(const std::vector<cv::KeyPoint>& keypoints, cv::Point2f topleft, cv::Point2f bottomright, std::vector<cv::KeyPoint>& in, std::vector<cv::KeyPoint>& out)
 {
     for(int i = 0; i < keypoints.size(); i++)
     {
@@ -38,7 +63,7 @@ void track(cv::Mat im_prev, cv::Mat im_gray, const std::vector<std::pair<cv::Key
         //Calculate forward-backward error
         for(int i = 0; i < pts.size(); i++)
         {
-            cv::Point2d v = pts_back[i]-pts[i];
+            cv::Point2f v = pts_back[i]-pts[i];
             fb_err.push_back(sqrt(v.dot(v)));
         }
 
@@ -62,8 +87,8 @@ cv::Point2f rotate(cv::Point2f p, float rad)
 {
     if(rad == 0)
         return p;
-    double s = sin(rad);
-    double c = cos(rad);
+    float s = sin(rad);
+    float c = cos(rad);
     return cv::Point2f(c*p.x-s*p.y,s*p.x+c*p.y);
 }
 
@@ -133,16 +158,16 @@ void CMT::initialise(cv::Mat im_gray0, cv::Point2f topleft, cv::Point2f bottomri
         classesDatabase.push_back(selectedClasses[i]);
 
     //Get all distances between selected keypoints in squareform and get all angles between selected keypoints
-    squareForm = std::vector<std::vector<double> >();
-    angles = std::vector<std::vector<double> >();
+    squareForm = std::vector<std::vector<float> >();
+    angles = std::vector<std::vector<float> >();
     for(int i = 0; i < selected_keypoints.size(); i++)
     {
-        std::vector<double> lineSquare;
-        std::vector<double> lineAngle;
+        std::vector<float> lineSquare;
+        std::vector<float> lineAngle;
         for(int j = 0; j < selected_keypoints.size(); j++)
         {
-            double dx = selected_keypoints[j].pt.x-selected_keypoints[i].pt.x;
-            double dy = selected_keypoints[j].pt.y-selected_keypoints[i].pt.y;
+            float dx = selected_keypoints[j].pt.x-selected_keypoints[i].pt.x;
+            float dy = selected_keypoints[j].pt.y-selected_keypoints[i].pt.y;
             lineSquare.push_back(sqrt(dx*dx+dy*dy));
             lineAngle.push_back(atan2(dy, dx));
         }
@@ -217,9 +242,9 @@ T median(std::vector<T> list)
     return val;
 }
 
-double findMinSymetric(const std::vector<std::vector<double> >& dist, const std::vector<bool>& used, int limit, int &i, int &j)
+float findMinSymetric(const std::vector<std::vector<float> >& dist, const std::vector<bool>& used, int limit, int &i, int &j)
 {
-    double min = dist[0][0];
+    float min = dist[0][0];
     i = 0;
     j = 0;
     for(int x = 0; x < limit; x++)
@@ -240,14 +265,14 @@ double findMinSymetric(const std::vector<std::vector<double> >& dist, const std:
 
 std::vector<Cluster> linkage(const std::vector<cv::Point2f>& list)
 {
-    double inf = 10000000;0;
+    float inf = 10000000;0;
     std::vector<bool> used;
     for(int i = 0; i < 2*list.size(); i++)
         used.push_back(false);
-    std::vector<std::vector<double> > dist;
+    std::vector<std::vector<float> > dist;
     for(int i = 0; i < list.size(); i++)
     {
-        std::vector<double> line;
+        std::vector<float> line;
         for(int j = 0; j < list.size(); j++)
         {
             if(i == j)
@@ -264,7 +289,7 @@ std::vector<Cluster> linkage(const std::vector<cv::Point2f>& list)
     }
     for(int i = 0; i < list.size(); i++)
     {
-        std::vector<double> line;
+        std::vector<float> line;
         for(int j = 0; j < 2*list.size(); j++)
             line.push_back(inf);
         dist.push_back(line);
@@ -273,7 +298,7 @@ std::vector<Cluster> linkage(const std::vector<cv::Point2f>& list)
     while(clusters.size() < list.size()-1)
     {
         int x, y;
-        double min = findMinSymetric(dist, used, list.size()+clusters.size(), x, y);
+        float min = findMinSymetric(dist, used, list.size()+clusters.size(), x, y);
         Cluster cluster;
         cluster.first = x;
         cluster.second = y;
@@ -292,7 +317,7 @@ std::vector<Cluster> linkage(const std::vector<cv::Point2f>& list)
     return clusters;
 }
 
-void fcluster_rec(std::vector<int>& data, const std::vector<Cluster>& clusters, double threshold, const Cluster& currentCluster, int& binId)
+void fcluster_rec(std::vector<int>& data, const std::vector<Cluster>& clusters, float threshold, const Cluster& currentCluster, int& binId)
 {
     int startBin = binId;
     if(currentCluster.first >= data.size())
@@ -336,7 +361,7 @@ int argmax(const std::vector<int>& list)
     return id;
 }
 
-std::vector<int> fcluster(const std::vector<Cluster>& clusters, double threshold)
+std::vector<int> fcluster(const std::vector<Cluster>& clusters, float threshold)
 {
     std::vector<int> data;
     for(int i = 0; i < clusters.size()+1; i++)
@@ -346,7 +371,7 @@ std::vector<int> fcluster(const std::vector<Cluster>& clusters, double threshold
     return data;
 }
 
-void CMT::estimate(const std::vector<std::pair<cv::KeyPoint, int> >& keypointsIN, cv::Point2f& center, double& scaleEstimate, double& medRot, std::vector<std::pair<cv::KeyPoint, int> >& keypoints)
+void CMT::estimate(const std::vector<std::pair<cv::KeyPoint, int> >& keypointsIN, cv::Point2f& center, float& scaleEstimate, float& medRot, std::vector<std::pair<cv::KeyPoint, int> >& keypoints)
 {
     center = cv::Point2f(NAN,NAN);
     scaleEstimate = NAN;
@@ -388,20 +413,20 @@ void CMT::estimate(const std::vector<std::pair<cv::KeyPoint, int> >& keypointsIN
                 pts_ind2.push_back(keypoints[ind2[i]].first);
             }
 
-            std::vector<double> scaleChange;
-            std::vector<double> angleDiffs;
+            std::vector<float> scaleChange;
+            std::vector<float> angleDiffs;
             for(int i = 0; i < pts_ind1.size(); i++)
             {
                 cv::Point2f p = pts_ind2[i].pt - pts_ind1[i].pt;
                 //This distance might be 0 for some combinations,
                 //as it can happen that there is more than one keypoint at a single location
-                double dist = sqrt(p.dot(p));
-                double origDist = squareForm[class_ind1[i]][class_ind2[i]];
+                float dist = sqrt(p.dot(p));
+                float origDist = squareForm[class_ind1[i]][class_ind2[i]];
                 scaleChange.push_back(dist/origDist);
                 //Compute angle
-                double angle = atan2(p.y, p.x);
-                double origAngle = angles[class_ind1[i]][class_ind2[i]];
-                double angleDiff = angle - origAngle;
+                float angle = atan2(p.y, p.x);
+                float origAngle = angles[class_ind1[i]][class_ind2[i]];
+                float angleDiff = angle - origAngle;
                 //Fix long way angles
                 if(fabs(angleDiff) > M_PI)
                     angleDiff -= sign(angleDiff) * 2 * M_PI;
@@ -475,8 +500,8 @@ void CMT::processFrame(cv::Mat im_gray)
     track(im_prev, im_gray, activeKeypoints, trackedKeypoints, status);
 
     cv::Point2f center;
-    double scaleEstimate;
-    double rotationEstimate;
+    float scaleEstimate;
+    float rotationEstimate;
     std::vector<std::pair<cv::KeyPoint, int> > trackedKeypoints2;
     estimate(trackedKeypoints, center, scaleEstimate, rotationEstimate, trackedKeypoints2);
     trackedKeypoints = trackedKeypoints2;

@@ -14,8 +14,8 @@ public:
     std::string matcherType;
     int descriptorLength;
     int thrOutlier;
-    double thrConf;
-    double thrRatio;
+    float thrConf;
+    float thrRatio;
 
     bool estimateScale;
     bool estimateRotation;
@@ -29,8 +29,8 @@ public:
     cv::Mat featuresDatabase;
     std::vector<int> classesDatabase;
 
-    std::vector<std::vector<double> > squareForm;
-    std::vector<std::vector<double> > angles;
+    std::vector<std::vector<float> > squareForm;
+    std::vector<std::vector<float> > angles;
 
     cv::Point2f topLeft;
     cv::Point2f topRight;
@@ -60,7 +60,7 @@ public:
 
     CMT();
     void initialise(cv::Mat im_gray0, cv::Point2f topleft, cv::Point2f bottomright);
-    void estimate(const std::vector<std::pair<cv::KeyPoint, int> >& keypointsIN, cv::Point2f& center, double& scaleEstimate, double& medRot, std::vector<std::pair<cv::KeyPoint, int> >& keypoints);
+    void estimate(const std::vector<std::pair<cv::KeyPoint, int> >& keypointsIN, cv::Point2f& center, float& scaleEstimate, float& medRot, std::vector<std::pair<cv::KeyPoint, int> >& keypoints);
     void processFrame(cv::Mat im_gray);
 };
 
@@ -68,11 +68,11 @@ class Cluster
 {
 public:
     int first, second;//cluster id
-    double dist;
+    float dist;
     int num;
 };
 
-void inout_rect(const std::vector<cv::KeyPoint>& keypoints, cv::Point2d topleft, cv::Point2d bottomright, std::vector<cv::KeyPoint>& in, std::vector<cv::KeyPoint>& out);
+void inout_rect(const std::vector<cv::KeyPoint>& keypoints, cv::Point2f topleft, cv::Point2f bottomright, std::vector<cv::KeyPoint>& in, std::vector<cv::KeyPoint>& out);
 void track(cv::Mat im_prev, cv::Mat im_gray, const std::vector<std::pair<cv::KeyPoint, int> >& keypointsIN, std::vector<std::pair<cv::KeyPoint, int> >& keypointsTracked, std::vector<unsigned char>& status, int THR_FB = 20);
 cv::Point2f rotate(cv::Point2f p, float rad);
 #endif // CMT_H
