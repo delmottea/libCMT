@@ -23,7 +23,7 @@ void track(cv::Mat im_prev, cv::Mat im_gray, const std::vector<std::pair<cv::Key
         std::vector<cv::Point2f> pts;
         std::vector<cv::Point2f> pts_back;
         std::vector<cv::Point2f> nextPts;
-        std::vector<bool> status_back;
+        std::vector<unsigned char> status_back;
         std::vector<float> err;
         std::vector<float> err_back;
         std::vector<float> fb_err;
@@ -119,9 +119,11 @@ void CMT::initialise(cv::Mat im_gray0, cv::Point2f topleft, cv::Point2f bottomri
         backgroundClasses.push_back(0);
 
     //Stack background features and selected features into database
-    featuresDatabase = cv::Mat(background_features.rows+selectedFeatures.rows, background_features.cols, background_features.type());
-    background_features.copyTo(featuresDatabase(cv::Rect(0,0,background_features.cols, background_features.rows)));
-    selectedFeatures.copyTo(featuresDatabase(cv::Rect(0,background_features.rows,selectedFeatures.cols, selectedFeatures.rows)));
+    featuresDatabase = cv::Mat(background_features.rows+selectedFeatures.rows, std::max(background_features.cols,selectedFeatures.cols), background_features.type());
+    if(background_features.cols > 0)
+        background_features.copyTo(featuresDatabase(cv::Rect(0,0,background_features.cols, background_features.rows)));
+    if(selectedFeatures.cols > 0)
+        selectedFeatures.copyTo(featuresDatabase(cv::Rect(0,background_features.rows,selectedFeatures.cols, selectedFeatures.rows)));
 
     //Same for classes
     classesDatabase = std::vector<int>();
