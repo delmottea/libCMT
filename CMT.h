@@ -52,7 +52,7 @@ public:
     std::vector<std::pair<cv::KeyPoint,int> > activeKeypoints;
     std::vector<std::pair<cv::KeyPoint,int> > trackedKeypoints;
 
-    int nbInitialKeypoints;
+    unsigned int nbInitialKeypoints;
 
     std::vector<cv::Point2f> votes;
 
