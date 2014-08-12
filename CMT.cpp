@@ -72,8 +72,10 @@ void track(cv::Mat im_prev, cv::Mat im_gray, const std::vector<std::pair<cv::Key
         {
             std::pair<cv::KeyPoint, int> p = keypointsIN[i];
             if(status[i])
+            {
                 p.first.pt = nextPts[i];
-            keypointsTracked.push_back(p);
+                keypointsTracked.push_back(p);
+            }
         }
     }
     else keypointsTracked = std::vector<std::pair<cv::KeyPoint, int> >();
