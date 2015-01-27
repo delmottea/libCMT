@@ -571,7 +571,7 @@ void CMT::processFrame(cv::Mat im_gray)
         int keypoint_class = classes[bestInd];
 
         //If distance ratio is ok and absolute distance is ok and keypoint class is not background
-        if(ratio < thrRatio && combined[bestInd] > thrConf && keypoint_class != 0)
+        if(ratio < thrRatio && combined[0] > thrConf && keypoint_class != 0)
             activeKeypoints.push_back(std::make_pair(keypoint, keypoint_class));
 
         //In a second step, try to match difficult keypoints
