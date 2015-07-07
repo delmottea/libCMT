@@ -12,7 +12,7 @@ option(BUILD_WITH_QT "Use QDebug" OFF)
 include_directories(${OpenCV_INCLUDE_DIRS})
 link_directories(${OpenCV_LIB_DIR})
 
-add_library(cmt CMT.cpp)
+add_library(cmt SHARED CMT.cpp)
 target_link_libraries(cmt ${OpenCV_LIBS})
 
 if(BUILD_MAIN)
@@ -29,3 +29,10 @@ if(BUILD_MAIN)
 	endif()
 endif()
 
+install(TARGETS cmt
+  LIBRARY DESTINATION lib
+  PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_WRITE WORLD_EXECUTE)
+install(FILES CMT.h DESTINATION include/libcmt)
+
+configure_file(libcmt.pc.in libcmt.pc @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libcmt.pc DESTINATION lib/pkgconfig)
