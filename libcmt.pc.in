@@ -1,0 +1,16 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+libdir=${prefix}/lib
+includedir=-I${prefix}/include
+link_shared_files=-lcmt
+link_static_files=
+cflag_defs=
+cflag_options=
+
+Name: @PACKAGE_NAME@
+Description: @LIBCMT_SHORT_DESCRIPTION@
+URL: @LIBCMT_URL@
+Version: @LIBCMT_VERSION_MAJOR@.@LIBCMT_VERSION_MINOR@.@LIBCMT_VERSION_MICRO@
+Requires: @PKG_CONF_REQUIRES@
+Libs: -L${libdir} ${link_shared_files}
+Libs.private: ${link_static_files}
+Cflags: ${cflag_defs} ${cflag_options} ${includedir}
