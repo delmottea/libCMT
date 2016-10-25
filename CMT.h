@@ -4,7 +4,12 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/features2d/features2d.hpp>
 
+#define OPENCV_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
+#define OPENCV_VERSION_CODE OPENCV_VERSION(CV_MAJOR_VERSION, CV_MINOR_VERSION, CV_SUBMINOR_VERSION)
 
+#if OPENCV_VERSION_CODE>=OPENCV_VERSION(3,1,0)
+  #include <opencv2/xfeatures2d.hpp>
+#endif
 
 class CMT
 {
@@ -20,8 +25,12 @@ public:
     bool estimateScale;
     bool estimateRotation;
 
+#if OPENCV_VERSION_CODE<OPENCV_VERSION(3,1,0)
     cv::Ptr<cv::FeatureDetector> detector;
     cv::Ptr<cv::DescriptorExtractor> descriptorExtractor;
+#else
+    cv::Ptr<cv::Feature2D> detector;
+#endif
     cv::Ptr<cv::DescriptorMatcher> descriptorMatcher;
 
     cv::Mat selectedFeatures;

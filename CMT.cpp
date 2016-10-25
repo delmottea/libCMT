@@ -108,11 +108,16 @@ void CMT::initialise(cv::Mat im_gray0, cv::Point2f topleft, cv::Point2f bottomri
 {
 
     //Initialise detector, descriptor, matcher
+#if OPENCV_VERSION_CODE<OPENCV_VERSION(3,1,0)
     detector = cv::Algorithm::create<cv::FeatureDetector>(detectorType.c_str());
     descriptorExtractor = cv::Algorithm::create<cv::DescriptorExtractor>(descriptorType.c_str());
     descriptorMatcher = cv::DescriptorMatcher::create(matcherType.c_str());
     std::vector<std::string> list;
     cv::Algorithm::getList(list);
+#else
+    detector = cv::BRISK::create();
+    descriptorMatcher = cv::DescriptorMatcher::create(matcherType.c_str());
+#endif
 
     //Get initial keypoints in whole image
     std::vector<cv::KeyPoint> keypoints;
@@ -122,7 +127,11 @@ void CMT::initialise(cv::Mat im_gray0, cv::Point2f topleft, cv::Point2f bottomri
     std::vector<cv::KeyPoint> selected_keypoints;
     std::vector<cv::KeyPoint> background_keypoints;
     inout_rect(keypoints, topleft, bottomright, selected_keypoints, background_keypoints);
+#if OPENCV_VERSION_CODE<OPENCV_VERSION(3,1,0)
     descriptorExtractor->compute(im_gray0, selected_keypoints, selectedFeatures);
+#else
+    detector->compute(im_gray0, selected_keypoints, selectedFeatures);
+#endif
 
     if(selected_keypoints.size() == 0)
     {
@@ -132,7 +141,11 @@ void CMT::initialise(cv::Mat im_gray0, cv::Point2f topleft, cv::Point2f bottomri
 
     //Remember keypoints that are not in the rectangle as background keypoints
     cv::Mat background_features;
+#if OPENCV_VERSION_CODE<OPENCV_VERSION(3,1,0)
     descriptorExtractor->compute(im_gray0, background_keypoints, background_features);
+#else
+    detector->compute(im_gray0, background_keypoints, background_features);
+#endif
 
     //Assign each keypoint a class starting from 1, background is 0
     selectedClasses = std::vector<int>();
@@ -527,7 +540,11 @@ void CMT::processFrame(cv::Mat im_gray)
     std::vector<cv::KeyPoint> keypoints;
     cv::Mat features;
     detector->detect(im_gray, keypoints);
+#if OPENCV_VERSION_CODE<OPENCV_VERSION(3,1,0)
     descriptorExtractor->compute(im_gray, keypoints, features);
+#else
+    detector->compute(im_gray, keypoints, features);
+#endif
 
     //Create list of active keypoints
     activeKeypoints = std::vector<std::pair<cv::KeyPoint, int> >();
