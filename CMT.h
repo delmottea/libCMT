@@ -48,6 +48,7 @@ public:
 
     cv::Rect_<float> boundingbox;
     bool hasResult;
+    bool isInitialized;
 
 
     cv::Point2f centerToTopLeft;

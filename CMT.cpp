@@ -102,6 +102,7 @@ CMT::CMT()
     estimateScale = true;
     estimateRotation = true;
     nbInitialKeypoints = 0;
+    isInitialized = false;
 }
 
 void CMT::initialise(cv::Mat im_gray0, cv::Point2f topleft, cv::Point2f bottomright)
@@ -214,6 +215,8 @@ void CMT::initialise(cv::Mat im_gray0, cv::Point2f topleft, cv::Point2f bottomri
 
     //Remember number of initial keypoints
     nbInitialKeypoints = selected_keypoints.size();
+
+    isInitialized = true;
 }
 
 typedef std::pair<int,int> PairInt;
@@ -525,6 +528,13 @@ std::vector<bool> in1d(const std::vector<int>& a, const std::vector<int>& b)
 
 void CMT::processFrame(cv::Mat im_gray)
 {
+    if (!isInitialized)
+    {
+      std::cout << "ERROR: Tracking window has been not initialized yet. ";
+      std::cout << "Please call CMT::initialise first." << std::endl;
+      return;
+    }
+
     trackedKeypoints = std::vector<std::pair<cv::KeyPoint, int> >();
     std::vector<unsigned char> status;
     track(im_prev, im_gray, activeKeypoints, trackedKeypoints, status);
