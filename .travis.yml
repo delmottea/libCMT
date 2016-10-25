@@ -1,0 +1,17 @@
+sudo: true
+
+dist: trusty
+
+language: c++
+
+compiler: g++
+
+install:
+  - sudo -H apt-get update -qq
+  - sudo -H apt-get install libopencv-dev
+
+script:
+  - mkdir build && cd build
+  - cmake ..
+  - make -j4
+  - sudo make install
