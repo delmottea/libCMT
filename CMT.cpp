@@ -5,19 +5,19 @@
 
 #if __cplusplus < 201103L //test if c++11
 
-    #include <limits>
+#include <limits>
 
-    #ifndef NAN
-    //may not be correct on all compilator, DON'T USE the flag FFAST-MATH
+#ifndef NAN
+//may not be correct on all compilator, DON'T USE the flag FFAST-MATH
 
-        #define NAN std::numeric_limits<float>::quiet_NaN()
+#define NAN std::numeric_limits<float>::quiet_NaN()
 
-        template <typename T>
-        bool isnan(T d)
-        {
-          return d != d;
-        }
-    #endif
+template <typename T>
+bool isnan(T d)
+{
+    return d != d;
+}
+#endif
 
 #endif
 
@@ -37,7 +37,7 @@ void track(cv::Mat im_prev, cv::Mat im_gray, const std::vector<std::pair<cv::Key
     //Status of tracked keypoint - True means successfully tracked
     status = std::vector<unsigned char>();
     //for(int i = 0; i < keypointsIN.size(); i++)
-      //  status.push_back(false);
+    //  status.push_back(false);
     //If at least one keypoint is active
     if(keypointsIN.size() > 0)
     {
@@ -90,20 +90,20 @@ cv::Point2f rotate(cv::Point2f p, float rad)
     return cv::Point2f(c*p.x-s*p.y,s*p.x+c*p.y);
 }
 
-CMT::CMT()
-{
-    detectorType = "Feature2D.BRISK";
-    descriptorType = "Feature2D.BRISK";
-    matcherType = "BruteForce-Hamming";
-    thrOutlier = 20;
-    thrConf = 0.75;
-    thrRatio = 0.8;
-    descriptorLength = 512;
-    estimateScale = true;
-    estimateRotation = true;
-    nbInitialKeypoints = 0;
-    isInitialized = false;
-}
+CMT::CMT() :
+    detectorType("Feature2D.BRISK"),
+    descriptorType( "Feature2D.BRISK"),
+    matcherType("BruteForce-Hamming"),
+    descriptorLength(512),
+    thrOutlier(20),
+    thrConf(0.75),
+    thrRatio(0.8),
+    estimateScale(true),
+    estimateRotation(true),
+    hasResult(false),
+    isInitialized(false),
+    nbInitialKeypoints(0)
+{}
 
 void CMT::initialise(cv::Mat im_gray0, cv::Point2f topleft, cv::Point2f bottomright)
 {
@@ -395,10 +395,10 @@ std::vector<int> argSortInt(const std::vector<int>& list)
 {
     std::vector<int> result(list.size());
     std::vector<std::pair<int, int> > pairList(list.size());
-    for(int i = 0; i < list.size(); i++)
+    for(size_t i = 0; i < list.size(); i++)
         pairList[i] = std::make_pair(i, list[i]);
     std::sort(&pairList[0], &pairList[0]+pairList.size(), comparatorPairSecond);
-    for(int i = 0; i < list.size(); i++)
+    for(size_t i = 0; i < list.size(); i++)
         result[i] = pairList[i].first;
     return result;
 }
@@ -530,9 +530,9 @@ void CMT::processFrame(cv::Mat im_gray)
 {
     if (!isInitialized)
     {
-      std::cout << "ERROR: Tracking window has been not initialized yet. ";
-      std::cout << "Please call CMT::initialise first." << std::endl;
-      return;
+        std::cout << "ERROR: Tracking window has been not initialized yet. ";
+        std::cout << "Please call CMT::initialise first." << std::endl;
+        return;
     }
 
     trackedKeypoints = std::vector<std::pair<cv::KeyPoint, int> >();
@@ -564,11 +564,11 @@ void CMT::processFrame(cv::Mat im_gray)
     descriptorMatcher->knnMatch(features, featuresDatabase, matchesAll, 2);
 
     //Get all matches for selected features
-    if(!isnan(center.x) && !isnan(center.y))
+    if(!std::isnan(center.x) && ! std::isnan(center.y))
         descriptorMatcher->knnMatch(features, selectedFeatures, selectedMatchesAll, selectedFeatures.rows);
 
     std::vector<cv::Point2f> transformedSprings(springs.size());
-    for(int i = 0; i < springs.size(); i++)
+    for(size_t i = 0; i < springs.size(); i++)
         transformedSprings[i] = scaleEstimate * rotate(springs[i], -rotationEstimate);
 
     //For each keypoint and its descriptor
@@ -589,7 +589,7 @@ void CMT::processFrame(cv::Mat im_gray)
 
         //Get best and second best index
         int bestInd = matches[0].trainIdx;
-        int secondBestInd = matches[1].trainIdx;
+        // int secondBestInd = matches[1].trainIdx;
 
         //Compute distance ratio according to Lowe
         float ratio = (1-combined[0]) / (1-combined[1]);
@@ -603,20 +603,20 @@ void CMT::processFrame(cv::Mat im_gray)
 
         //In a second step, try to match difficult keypoints
         //If structural constraints are applicable
-        if(!(isnan(center.x) | isnan(center.y)))
+        if(!(std::isnan(center.x) | std::isnan(center.y)))
         {
             //Compute distances to initial descriptors
             std::vector<cv::DMatch> matches = selectedMatchesAll[i];
             std::vector<float> distances(matches.size()), distancesTmp(matches.size());
             std::vector<int> trainIndex(matches.size());
-            for(int j = 0; j < matches.size(); j++)
+            for(size_t j = 0; j < matches.size(); j++)
             {
                 distancesTmp[j] = matches[j].distance;
                 trainIndex[j] = matches[j].trainIdx;
             }
             //Re-order the distances based on indexing
             std::vector<int> idxs = argSortInt(trainIndex);
-            for(int j = 0; j < idxs.size(); j++)
+            for(size_t j = 0; j < idxs.size(); j++)
                 distances[j] = distancesTmp[idxs[j]];
 
             //Convert distances to confidences
@@ -692,7 +692,7 @@ void CMT::processFrame(cv::Mat im_gray)
     }
 
     //Update object state estimate
-    std::vector<std::pair<cv::KeyPoint, int> > activeKeypointsBefore = activeKeypoints;
+    // std::vector<std::pair<cv::KeyPoint, int> > activeKeypointsBefore = activeKeypoints;
     im_prev = im_gray;
     topLeft = cv::Point2f(NAN,NAN);
     topRight = cv::Point2f(NAN,NAN);
@@ -701,7 +701,7 @@ void CMT::processFrame(cv::Mat im_gray)
 
     boundingbox = cv::Rect_<float>(NAN,NAN,NAN,NAN);
     hasResult = false;
-    if(!(isnan(center.x) | isnan(center.y)) && activeKeypoints.size() > nbInitialKeypoints / 10)
+    if(!(std::isnan(center.x) | std::isnan(center.y)) && activeKeypoints.size() > nbInitialKeypoints / 10)
     {
         hasResult = true;
 
