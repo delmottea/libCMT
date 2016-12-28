@@ -21,7 +21,6 @@ public:
     int thrOutlier;
     float thrConf;
     float thrRatio;
-
     bool estimateScale;
     bool estimateRotation;
 
